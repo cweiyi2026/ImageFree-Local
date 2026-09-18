@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageFree Local - 免费 AI 图片生成器</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ImageFree Local</h1>
+            <p class="subtitle">免费 AI 图片生成器 · 本地优先 · 多引擎</p>
+        </header>
+
+        <main>
+            <section class="generator">
+                <div class="input-group">
+                    <label for="prompt">提示词</label>
+                    <textarea id="prompt" placeholder="描述你想生成的图片，例如：A futuristic cat wearing sunglasses, neon lights, 8k resolution, cyberpunk style" rows="3"></textarea>
+                    <div class="hint">支持中英文，越详细效果越好</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="negative_prompt">反向提示词 (可选)</label>
+                    <textarea id="negative_prompt" placeholder="不想要的元素，例如：blurry, low quality, distorted, ugly" rows="2"></textarea>
+                </div>
+
+                <div class="controls-row">
+                    <div class="control-group">
+                        <label for="aspect_ratio">宽高比</label>
+                        <select id="aspect_ratio">
+                            <option value="1:1">1:1 (1024×1024)</option>
+                            <option value="3:4">3:4 (768×1024) 竖版</option>
+                            <option value="4:3">4:3 (1024×768) 横版</option>
+                            <option value="9:16">9:16 (576×1024) 手机竖屏</option>
+                            <option value="16:9">16:9 (1024×576) 视频横屏</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="provider">生成引擎</label>
+                        <select id="provider">
+                            <option value="mock">Mock (演示/占位图)</option>
+                            <option value="zhipu">Zhipu GLM-Image (云端)</option>
+                            <option value="local">Z-Image-Turbo (本地)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="seed">随机种子 (可选)</label>
+                        <input type="number" id="seed" placeholder="留空随机" min="0" max="2147483647">
+                    </div>
+                </div>
+
+                <div class="advanced-controls" id="advanced_controls">
+                    <details>
+                        <summary>高级参数</summary>
+                        <div class="control-group">
+                            <label for="steps">推理步数</label>
+                            <input type="number" id="steps" placeholder="默认由模型决定" min="1" max="50">
+                        </div>
+                        <div class="control-group">
+                            <label for="guidance_scale">Guidance Scale</label>
+                            <input type="number" id="guidance_scale" placeholder="默认由模型决定" step="0.1" min="0" max="20">
+                        </div>
+                    </details>
+                </div>
+
+                <button id="generate_btn" class="btn-primary">
+                    <span class="btn-text">生成图片</span>
+                    <span class="btn-loading" style="display:none;">生成中...</span>
+                </button>
+            </section>
+
+            <section class="result" id="result_section" style="display:none;">
+                <h2>生成结果</h2>
+                <div class="image-wrapper">
+                    <img id="result_image" alt="生成的图片">
+                    <div class="image-overlay" id="image_overlay">
+                        <button id="download_btn" class="btn-secondary">下载图片</button>
+                        <button id="regenerate_btn" class="btn-secondary">重新生成</button>
+                    </div>
+                </div>
+                <div class="result-meta" id="result_meta"></div>
+            </section>
+
+            <section class="gallery" id="gallery">
+                <h2>历史生成</h2>
+                <div class="gallery-grid" id="gallery_grid"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>ImageFree Local · Powered by FastAPI + Vanilla JS</p>
+            <p class="links">
+                <a href="/api/providers" target="_blank">可用引擎</a>
+                ·
+                <a href="https://hf-mirror.com/Tongyi-MAI/Z-Image-Turbo" target="_blank">Z-Image-Turbo 模型</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

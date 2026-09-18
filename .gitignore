@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 环境变量（含密钥）
+.env
+
+# 输出图片
+outputs/
+
+# 模型文件（太大，且版权问题）
+models/
+*.safetensors
+*.bin
+*.gguf
+
+# 虚拟环境
+venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+nul
