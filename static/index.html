@@ -14,7 +14,15 @@
         </header>
 
         <main>
-            <section class="generator">
+            <!-- 模式切换标签页 -->
+            <div class="mode-tabs">
+                <button class="mode-tab active" data-mode="txt2img">文生图</button>
+                <button class="mode-tab" data-mode="img2img">图生图</button>
+                <button class="mode-tab" data-mode="removebg">背景移除</button>
+            </div>
+
+            <!-- 文生图面板 -->
+            <section class="generator-panel active" id="panel_txt2img">
                 <div class="input-group">
                     <label for="prompt">提示词</label>
                     <textarea id="prompt" placeholder="描述你想生成的图片，例如：A futuristic cat wearing sunglasses, neon lights, 8k resolution, cyberpunk style" rows="3"></textarea>
@@ -70,6 +78,91 @@
                 <button id="generate_btn" class="btn-primary">
                     <span class="btn-text">生成图片</span>
                     <span class="btn-loading" style="display:none;">生成中...</span>
+                </button>
+            </section>
+
+            <!-- 图生图面板 -->
+            <section class="generator-panel" id="panel_img2img">
+                <div class="input-group">
+                    <label for="img2img_image">输入图片</label>
+                    <input type="file" id="img2img_image" accept="image/*">
+                    <div class="hint">支持 JPG/PNG/WebP，最大 10MB</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="img2img_prompt">提示词</label>
+                    <textarea id="img2img_prompt" placeholder="描述你想生成的图片风格，例如：oil painting style, vibrant colors" rows="2"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="img2img_negative_prompt">反向提示词 (可选)</label>
+                    <textarea id="img2img_negative_prompt" placeholder="不想要的元素" rows="1"></textarea>
+                </div>
+
+                <div class="controls-row">
+                    <div class="control-group">
+                        <label for="img2img_provider">生成引擎</label>
+                        <select id="img2img_provider">
+                            <option value="mock">Mock (演示/占位图)</option>
+                            <option value="zhipu">Zhipu GLM-Image (云端)</option>
+                            <option value="local">Z-Image-Turbo (本地)</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="img2img_strength">重绘强度</label>
+                        <input type="range" id="img2img_strength" min="0" max="1" step="0.05" value="0.75">
+                        <span id="img2img_strength_value">0.75</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="img2img_seed">随机种子 (可选)</label>
+                        <input type="number" id="img2img_seed" placeholder="留空随机" min="0" max="2147483647">
+                    </div>
+                </div>
+
+                <div class="advanced-controls">
+                    <details>
+                        <summary>高级参数</summary>
+                        <div class="control-group">
+                            <label for="img2img_steps">推理步数</label>
+                            <input type="number" id="img2img_steps" placeholder="默认由模型决定" min="1" max="50">
+                        </div>
+                        <div class="control-group">
+                            <label for="img2img_guidance_scale">Guidance Scale</label>
+                            <input type="number" id="img2img_guidance_scale" placeholder="默认由模型决定" step="0.1" min="0" max="20">
+                        </div>
+                    </details>
+                </div>
+
+                <button id="img2img_btn" class="btn-primary">
+                    <span class="btn-text">生成图片</span>
+                    <span class="btn-loading" style="display:none;">生成中...</span>
+                </button>
+            </section>
+
+            <!-- 背景移除面板 -->
+            <section class="generator-panel" id="panel_removebg">
+                <div class="input-group">
+                    <label for="removebg_image">输入图片</label>
+                    <input type="file" id="removebg_image" accept="image/*">
+                    <div class="hint">支持 JPG/PNG/WebP，最大 10MB</div>
+                </div>
+
+                <div class="controls-row">
+                    <div class="control-group">
+                        <label for="removebg_provider">处理引擎</label>
+                        <select id="removebg_provider">
+                            <option value="mock">Mock (演示/占位图)</option>
+                            <option value="zhipu">Zhipu GLM-Image (云端)</option>
+                            <option value="local">Z-Image-Turbo (本地)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="removebg_btn" class="btn-primary">
+                    <span class="btn-text">移除背景</span>
+                    <span class="btn-loading" style="display:none;">处理中...</span>
                 </button>
             </section>
 

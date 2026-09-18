@@ -309,6 +309,86 @@ footer .links a:hover {
     text-decoration: underline;
 }
 
+/* Mode Tabs */
+.mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: fit-content;
+}
+
+.mode-tab {
+    padding: 10px 20px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.mode-tab:hover {
+    color: var(--fg);
+    background: var(--bg-elevated);
+}
+
+.mode-tab.active {
+    background: var(--accent);
+    color: #0d0d12;
+}
+
+.mode-tab.active:hover {
+    background: var(--accent-hover);
+}
+
+/* Generator Panels */
+.generator-panel {
+    display: none;
+}
+
+.generator-panel.active {
+    display: block;
+}
+
+/* Range input styling for img2img strength */
+input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+}
+
+input[type="range"] + span {
+    min-width: 40px;
+    text-align: right;
+    color: var(--muted);
+    font-size: 0.875rem;
+}
+
+/* File input styling */
+input[type="file"] {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+input[type="file"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
 /* Loading spinner */
 .btn-loading {
     display: inline-flex !important;
@@ -342,4 +422,6 @@ footer .links a:hover {
     header h1 { font-size: 1.75rem; }
     section { padding: 16px; }
     .controls-row { grid-template-columns: 1fr; }
+    .mode-tabs { width: 100%; }
+    .mode-tab { flex: 1; text-align: center; padding: 10px; }
 }

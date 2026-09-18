@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -6,6 +6,7 @@ from typing import Literal, Optional
 import os
 import uuid
 import base64
+import io
 from pathlib import Path
 
 app = FastAPI(title="ImageFree Local")
@@ -23,6 +24,18 @@ class GenerateRequest(BaseModel):
     seed: Optional[int] = None
     steps: Optional[int] = None
     guidance_scale: Optional[float] = None
+
+class Img2ImgRequest(BaseModel):
+    prompt: str
+    negative_prompt: str = ""
+    provider: Literal["mock", "zhipu", "local"] = "mock"
+    strength: float = 0.75  # 0-1，重绘强度
+    seed: Optional[int] = None
+    steps: Optional[int] = None
+    guidance_scale: Optional[float] = None
+
+class RemoveBgRequest(BaseModel):
+    provider: Literal["mock", "zhipu", "local"] = "mock"
 
 class GenerateResponse(BaseModel):
     success: bool
@@ -48,6 +61,10 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 class BaseProvider:
     name = "base"
     async def generate(self, req: GenerateRequest) -> GenerateResponse:
+        raise NotImplementedError
+    async def img2img(self, image_data: bytes, req: Img2ImgRequest) -> GenerateResponse:
+        raise NotImplementedError
+    async def remove_bg(self, image_data: bytes, req: RemoveBgRequest) -> GenerateResponse:
         raise NotImplementedError
 
 # Mock Provider - 返回占位图
@@ -78,6 +95,54 @@ class MockProvider(BaseProvider):
             seed=seed
         )
 
+    async def img2img(self, image_data: bytes, req: Img2ImgRequest) -> GenerateResponse:
+        # Mock: 返回带提示词的占位图
+        w, h = 1024, 1024
+        seed = req.seed or 42
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">
+  <rect width="100%" height="100%" fill="#1e1e2e"/>
+  <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" 
+        font-family="system-ui, sans-serif" font-size="20" fill="#888">
+    [Mock Img2Img] {req.prompt[:50]}{"..." if len(req.prompt) > 50 else ""}
+  </text>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" 
+        font-family="system-ui, sans-serif" font-size="16" fill="#666">
+    strength: {req.strength} • seed: {seed}
+  </text>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" 
+        font-family="system-ui, sans-serif" font-size="14" fill="#666">
+    输入图片已上传，重绘强度: {int(req.strength*100)}%
+  </text>
+</svg>'''
+        b64 = base64.b64encode(svg.encode()).decode()
+        return GenerateResponse(
+            success=True,
+            image_url=f"data:image/svg+xml;base64,{b64}",
+            provider=self.name,
+            seed=seed
+        )
+
+    async def remove_bg(self, image_data: bytes, req: RemoveBgRequest) -> GenerateResponse:
+        # Mock: 返回透明背景占位图
+        w, h = 1024, 1024
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">
+  <rect width="100%" height="100%" fill="none"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" 
+        font-family="system-ui, sans-serif" font-size="24" fill="#888">
+    [Mock RemoveBg] 背景已移除
+  </text>
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" 
+        font-family="system-ui, sans-serif" font-size="14" fill="#666">
+    透明背景 PNG (演示)
+  </text>
+</svg>'''
+        b64 = base64.b64encode(svg.encode()).decode()
+        return GenerateResponse(
+            success=True,
+            image_url=f"data:image/svg+xml;base64,{b64}",
+            provider=self.name
+        )
+
 # Zhipu Provider - 占位，待接入
 class ZhipuProvider(BaseProvider):
     name = "zhipu"
@@ -93,6 +158,20 @@ class ZhipuProvider(BaseProvider):
         return GenerateResponse(
             success=False,
             error="Zhipu provider not implemented yet",
+            provider=self.name
+        )
+
+    async def img2img(self, image_data: bytes, req: Img2ImgRequest) -> GenerateResponse:
+        return GenerateResponse(
+            success=False,
+            error="Zhipu img2img not implemented yet",
+            provider=self.name
+        )
+
+    async def remove_bg(self, image_data: bytes, req: RemoveBgRequest) -> GenerateResponse:
+        return GenerateResponse(
+            success=False,
+            error="Zhipu remove_bg not implemented yet",
             provider=self.name
         )
 
@@ -184,6 +263,20 @@ class LocalProvider(BaseProvider):
                 provider=self.name
             )
 
+    async def img2img(self, image_data: bytes, req: Img2ImgRequest) -> GenerateResponse:
+        return GenerateResponse(
+            success=False,
+            error="Local img2img not implemented yet (requires img2img pipeline)",
+            provider=self.name
+        )
+
+    async def remove_bg(self, image_data: bytes, req: RemoveBgRequest) -> GenerateResponse:
+        return GenerateResponse(
+            success=False,
+            error="Local remove_bg not implemented yet (requires segmentation model)",
+            provider=self.name
+        )
+
 # Provider 注册表
 PROVIDERS = {
     "mock": MockProvider(),
@@ -201,6 +294,46 @@ async def generate(req: GenerateRequest):
     if not provider:
         raise HTTPException(400, f"Unknown provider: {req.provider}")
     return await provider.generate(req)
+
+@app.post("/api/img2img", response_model=GenerateResponse)
+async def img2img(
+    image: UploadFile = File(...),
+    prompt: str = Form(""),
+    negative_prompt: str = Form(""),
+    provider: str = Form("mock"),
+    strength: float = Form(0.75),
+    seed: Optional[int] = Form(None),
+    steps: Optional[int] = Form(None),
+    guidance_scale: Optional[float] = Form(None)
+):
+    provider_obj = PROVIDERS.get(provider)
+    if not provider_obj:
+        raise HTTPException(400, f"Unknown provider: {provider}")
+    
+    image_data = await image.read()
+    req = Img2ImgRequest(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        provider=provider,
+        strength=strength,
+        seed=seed,
+        steps=steps,
+        guidance_scale=guidance_scale
+    )
+    return await provider_obj.img2img(image_data, req)
+
+@app.post("/api/remove-bg", response_model=GenerateResponse)
+async def remove_bg(
+    image: UploadFile = File(...),
+    provider: str = Form("mock")
+):
+    provider_obj = PROVIDERS.get(provider)
+    if not provider_obj:
+        raise HTTPException(400, f"Unknown provider: {provider}")
+    
+    image_data = await image.read()
+    req = RemoveBgRequest(provider=provider)
+    return await provider_obj.remove_bg(image_data, req)
 
 @app.get("/api/providers")
 async def list_providers():
